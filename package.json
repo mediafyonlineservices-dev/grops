@@ -2,6 +2,7 @@
     "name":  "@workspace/grops",
     "version":  "0.0.0",
     "private":  true,
+    "packageManager": "pnpm@11.0.9",
     "type":  "module",
     "scripts":  {
                     "dev":  "vite --config vite.config.ts --host 0.0.0.0",
