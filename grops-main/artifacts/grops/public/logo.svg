@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" width="160" height="40" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c026d3"/>
+      <stop offset="1" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(4 4)">
+    <circle cx="6" cy="16" r="4" fill="url(#g)"/>
+    <circle cx="22" cy="6" r="3" fill="url(#g)"/>
+    <circle cx="22" cy="26" r="3" fill="url(#g)"/>
+    <circle cx="32" cy="16" r="3.5" fill="url(#g)"/>
+    <path d="M6 16 L22 6 M6 16 L22 26 M22 6 L32 16 M22 26 L32 16" stroke="url(#g)" stroke-width="1.4" opacity="0.7"/>
+  </g>
+  <text x="46" y="26" font-family="ui-monospace,SF Mono,Menlo,monospace" font-size="20" font-weight="700" letter-spacing="2" fill="#fff">GROPS</text>
+</svg>

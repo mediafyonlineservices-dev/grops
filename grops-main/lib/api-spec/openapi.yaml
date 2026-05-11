@@ -1,0 +1,447 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 1.0.0
+  description: Grops V1 API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: graphs
+    description: Neurograph operations
+  - name: waitlist
+    description: Premium waitlist
+  - name: admin
+    description: Admin-only monitoring
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /graphs:
+    get:
+      operationId: listGraphs
+      tags: [graphs]
+      summary: List the current user's graphs
+      responses:
+        "200":
+          description: List of graph summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GraphSummary"
+  /graphs/usage:
+    get:
+      operationId: getGraphUsage
+      tags: [graphs]
+      summary: Current month usage vs limit
+      responses:
+        "200":
+          description: Usage payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageStatus"
+  /graphs/{id}:
+    get:
+      operationId: getGraph
+      tags: [graphs]
+      summary: Get a graph by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The graph
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Neurograph"
+  /graphs/{id}/clarify:
+    post:
+      operationId: clarifyGraph
+      tags: [graphs]
+      summary: Ask a question about an existing graph
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClarifyBody"
+      responses:
+        "200":
+          description: Clarification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClarifyResult"
+  /graphs/{id}/expand:
+    post:
+      operationId: expandGraph
+      tags: [graphs]
+      summary: Propose new nodes/edges from new information
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpandBody"
+      responses:
+        "200":
+          description: Proposed expansion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpansionProposal"
+  /graphs/{id}/expand/apply:
+    post:
+      operationId: applyExpansion
+      tags: [graphs]
+      summary: Apply an approved expansion proposal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpansionProposal"
+      responses:
+        "200":
+          description: Updated graph
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Neurograph"
+  /waitlist:
+    post:
+      operationId: joinWaitlist
+      tags: [waitlist]
+      summary: Add a name+email to the premium waitlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WaitlistBody"
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WaitlistStatus"
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: User activity (admin only)
+      responses:
+        "200":
+          description: User activity payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUsersResponse"
+  /admin/waitlist:
+    get:
+      operationId: adminListWaitlist
+      tags: [admin]
+      summary: All waitlist entries (admin only)
+      responses:
+        "200":
+          description: Waitlist entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminWaitlistResponse"
+  /admin/health:
+    get:
+      operationId: adminSystemHealth
+      tags: [admin]
+      summary: Generation success / latency (admin only)
+      responses:
+        "200":
+          description: System health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminHealthResponse"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+    GraphSourceMeta:
+      type: object
+      required: [id, name, pages, charCount]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        pages:
+          type: integer
+        charCount:
+          type: integer
+    GraphNode:
+      type: object
+      required: [id, label, topic, color, summary, quote, kind]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        topic:
+          type: string
+        color:
+          type: string
+        summary:
+          type: string
+        quote:
+          type: string
+        sourceDocId:
+          type: string
+          nullable: true
+        kind:
+          type: string
+          description: start | concept | finish
+    GraphEdge:
+      type: object
+      required: [from, to, label, color, kind]
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        label:
+          type: string
+        color:
+          type: string
+        kind:
+          type: string
+          description: cause | correlation
+    TopicLegendEntry:
+      type: object
+      required: [topic, color, count]
+      properties:
+        topic:
+          type: string
+        color:
+          type: string
+        count:
+          type: integer
+    Neurograph:
+      type: object
+      required: [id, title, mode, sources, createdAt, nodes, edges, topics, generationMs]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        mode:
+          type: string
+          description: summary | detailed
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/GraphSourceMeta"
+        createdAt:
+          type: string
+          format: date-time
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/GraphNode"
+        edges:
+          type: array
+          items:
+            $ref: "#/components/schemas/GraphEdge"
+        topics:
+          type: array
+          items:
+            $ref: "#/components/schemas/TopicLegendEntry"
+        generationMs:
+          type: integer
+    GraphSummary:
+      type: object
+      required: [id, title, mode, createdAt, nodeCount, edgeCount, sourceCount]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        mode:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        nodeCount:
+          type: integer
+        edgeCount:
+          type: integer
+        sourceCount:
+          type: integer
+    UsageStatus:
+      type: object
+      required: [used, limit]
+      properties:
+        used:
+          type: integer
+        limit:
+          type: integer
+    ClarifyBody:
+      type: object
+      required: [question]
+      properties:
+        question:
+          type: string
+          minLength: 1
+    ClarifyResult:
+      type: object
+      required: [answer, highlightedNodeIds]
+      properties:
+        answer:
+          type: string
+        highlightedNodeIds:
+          type: array
+          items:
+            type: string
+    ExpandBody:
+      type: object
+      required: [newInfo]
+      properties:
+        newInfo:
+          type: string
+          minLength: 1
+    ExpansionProposal:
+      type: object
+      required: [rationale, newNodes, newEdges]
+      properties:
+        rationale:
+          type: string
+        newNodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/GraphNode"
+        newEdges:
+          type: array
+          items:
+            $ref: "#/components/schemas/GraphEdge"
+    WaitlistBody:
+      type: object
+      required: [name, email]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+    WaitlistStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          description: added | already_on_waitlist
+    AdminUserRow:
+      type: object
+      required: [userId, graphsThisMonth, totalGraphs, lastActivity, limit]
+      properties:
+        userId:
+          type: string
+        graphsThisMonth:
+          type: integer
+        totalGraphs:
+          type: integer
+        lastActivity:
+          type: string
+          format: date-time
+        limit:
+          type: integer
+    AdminUsersResponse:
+      type: object
+      required: [monthStart, users, totalUsers]
+      properties:
+        monthStart:
+          type: string
+          format: date-time
+        totalUsers:
+          type: integer
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUserRow"
+    AdminWaitlistEntry:
+      type: object
+      required: [id, name, email, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    AdminWaitlistResponse:
+      type: object
+      required: [total, entries]
+      properties:
+        total:
+          type: integer
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminWaitlistEntry"
+    AdminHealthResponse:
+      type: object
+      required: [total, successes, failures, successRate, avgMs]
+      properties:
+        total:
+          type: integer
+        successes:
+          type: integer
+        failures:
+          type: integer
+        successRate:
+          type: number
+        avgMs:
+          type: integer
